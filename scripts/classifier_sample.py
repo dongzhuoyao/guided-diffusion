@@ -22,9 +22,42 @@ from guided_diffusion.script_util import (
     args_to_dict,
 )
 
+from torchvision.utils import make_grid, save_image
+
 
 def main():
     args = create_argparser().parse_args()
+
+    # taohu
+    args.use_ddim = True
+    args.model_path = "128x128_diffusion.pt"
+    args.classifier_path = "128x128_classifier.pt"
+    args.batch_size = 16
+    args.num_samples = 16
+    args.timestep_respacing = "ddim25"
+
+    args.attention_resolutions = "32, 16, 8"
+    args.class_cond = True
+    args.image_size = 128
+    args.learn_sigma = True
+    args.num_channels = 256
+    args.num_heads = 4
+    args.num_res_blocks = 2
+    args.resblock_updown = True
+    args.use_fp16 = True
+    args.use_scale_shift_norm = True
+
+    args.image_size = 128
+    args.classifier_attention_resolutions = "32, 16, 8"
+    args.classifier_depth = 2
+    args.classifier_width = 128
+    args.classifier_pool = "attention"
+    args.classifier_resblock_updown = True
+    args.classifier_use_scale_shift_norm = True
+    args.classifier_scale = 1.0
+    args.classifier_use_fp16 = True
+
+    ################
 
     dist_util.setup_dist()
     logger.configure()
@@ -84,6 +117,39 @@ def main():
             cond_fn=cond_fn,
             device=dist_util.dev(),
         )
+
+        if True:
+            # taohu
+            sample = (sample + 1) * 0.5
+            save_image(sample, "sample.png")
+            sample = (sample - 0.5) * 2.0
+            noise_z = diffusion.ddim_sample_reverse_loop(
+                model_fn,
+                shape=(args.batch_size, 3, args.image_size, args.image_size),
+                noise=sample,
+                clip_denoised=args.clip_denoised,
+                model_kwargs=model_kwargs,
+                cond_fn=cond_fn,
+                device=dist_util.dev(),
+                eta=0.0,
+            )
+            print(noise_z.shape)
+            print(noise_z.min(), noise_z.max(), noise_z.mean(), noise_z.std())
+            recovered_sample = diffusion.ddim_sample_loop(
+                model_fn,
+                shape=(args.batch_size, 3, args.image_size, args.image_size),
+                noise=noise_z,
+                clip_denoised=args.clip_denoised,
+                model_kwargs=model_kwargs,
+                cond_fn=cond_fn,
+                device=dist_util.dev(),
+                eta=0.0,
+            )
+            recovered_sample = (recovered_sample + 1) * 0.5
+            save_image(recovered_sample, "recovered_sample.png")
+
+            exit(0)
+
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()

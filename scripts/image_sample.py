@@ -23,6 +23,14 @@ from guided_diffusion.script_util import (
 def main():
     args = create_argparser().parse_args()
 
+    # taohu
+    args.use_ddim = True
+    args.model_path = "256x256_classifier.pt"
+    args.batch_size = 4
+    args.num_samples = 100
+    args.timestep_respacing = 250
+    ################
+
     dist_util.setup_dist()
     logger.configure()
 

@@ -1,3 +1,15 @@
+# DDIM Inversion Experiment
+
+```
+conda install -c conda-forge mpi4py
+```
+
+cd scripts:
+```
+SAMPLE_FLAGS="--batch_size 4 --num_samples 100 --timestep_respacing 250" python image_sample.py
+```
+
+
 # guided-diffusion
 
 This is the codebase for [Diffusion Models Beat GANS on Image Synthesis](http://arxiv.org/abs/2105.05233).
